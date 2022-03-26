@@ -4,20 +4,28 @@
         <title>CTC Runner</title>
         <meta charset="utf-8">
         <script src="ctc.js"></script>
+        <script src="services/sillyLang/index.js"></script>
         <script src="services/simpleTokenizer/index.js"></script>
         <script>
 (() => {
 
     window.run = async () => {
         let code = document.getElementById('code').value;
-        console.log(code);
+        
+        let SillyLang = new CTC.Service('sillylang');
 
-        let tokenizerService = new CTC.Service('simpleTokenizer');
-        let result = await tokenizerService.sendJsonRequestAsync({
-            filename: "fake-ide.txt",
-            code,
-        });
-        console.log(result);
+        (async () => {
+
+            let result = await SillyLang.sendJsonRequestAsync({
+                files: [
+                    { filename: "main.slang", content: code }
+                ],
+            })
+
+            console.log(result);
+
+        })();
+
     };
 
 })();

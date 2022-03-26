@@ -1,4 +1,4 @@
-const CTC = (() => {
+(typeof(process) === 'undefined' ? window : global).CTC = (() => {
 
     const services = new Map();
 
@@ -51,6 +51,30 @@ const CTC = (() => {
             if (!service) {
                 service = getServiceImpl();
                 if (!service) throw new Error("Service not found: " + serviceId + (version ? ` (${version})` : ""));
+
+                if (!!service.handleRequest) {
+                    return service;
+                }
+
+                let jsonHandler = service.handleJsonRequest;
+                let strHandler = service.handleStringRequest;
+                let subHandler = service.handleSubscriptionRequest;
+                service = {
+                    handleRequest: (type, payload, cb, errCb) => {
+                        if (type === 'J') {
+                            if (!jsonHandler) return errCb('BAD_REQUEST', "This service does not handle JSON requests.");
+                            jsonHandler(JSON.parse(JSON.stringify(payload)), cb, errCb);
+                        } else if (type === 'S') {
+                            if (!strHandler) return errCb('BAD_REQUEST', "This service does not handle raw string requests.");
+                            strHandler(payload, cb, errCb);
+                        } else if (type === 'U') {
+                            if (!subHandler) return errCb('BAD_REQUEST', "This service does not handle subscription requests.");
+                            subHandler(payload, cb, errCb);
+                        } else {
+                            throw new Error(); // this should not happen
+                        }
+                    },
+                };
             }
             return service;
         };
@@ -80,7 +104,7 @@ const CTC = (() => {
 
         _this.sendJsonRequestAsync = (obj) => {
             let p = new Promise(resolver => {
-                getService().handleRequest('J', JSON.stringify(obj), res => {
+                getService().handleRequest('J', JSON.parse(JSON.stringify(obj)), res => {
                     resolver(JSON.parse(JSON.stringify(res)));
                 }, defaultErrCb);
             });

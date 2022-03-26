@@ -4,12 +4,12 @@
     const LETTERS = "abcdefghijklmnopqrstuvwxyz";
     const ALPHA_NUMS = new Set((LETTERS + LETTERS.toUpperCase() + "_0123456789").split(""));
 
-    const handleRequest = (reqType, payload, cb, errCb) => {
-        if (reqType !== 'J') return errCb('BAD_REQUEST', "This service only accepts JSON requests");
-        let data = JSON.parse(payload);
-        let { filename, code } = data;
+    const handleJsonRequest = (data, cb, errCb) => {
+        let { filename, code, options } = data;
         if (!filename) return errCb('BAD_REQUEST', "Missing filename argument.");
         if (!code) return errCb('BAD_REQUEST', "Missing code argument.");
+        options = options || {};
+        let newlineIsControl = !!options.newlineControl;
         code = code.split("\r\n").join("\n").split("\r").join("\n") + "\n";
 
         // TODO: unicode split
@@ -44,7 +44,11 @@
                 case 'NORMAL':
                     isPunc = false;
                     if (WHITESPACE.has(c)) {
-                        // ignore
+                        if (newlineIsControl && c === '\n') {
+                            tokens.push({ value: c, type: 'newline', line: lines[i], col: cols[i] });
+                        } else {
+                            // ignore
+                        }
                     } else if (ALPHA_NUMS.has(c)) {
                         tokenStart = i;
                         state = 'WORD';
@@ -100,6 +104,7 @@
                     } else {
                         if (c == '\n') {
                             state = 'NORMAL';
+                            --i; // just in case newlines are control characters.
                         }
                     }
                     break;
@@ -134,7 +139,7 @@
         });
     };
 
-    CTC.initializeService("simpleTokenizer", "0.1.0", {
-        handleRequest,
+    (typeof(process) === 'undefined' ? window : global).CTC.initializeService("simpleTokenizer", "0.1.0", {
+        handleJsonRequest,
     });
 })();
