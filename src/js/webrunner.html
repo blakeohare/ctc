@@ -4,10 +4,46 @@
         <title>CTC Runner</title>
         <meta charset="utf-8">
         <script src="ctc.js"></script>
+        <script src="services/easyGame/index.js"></script>
         <script src="services/sillyLang/index.js"></script>
         <script src="services/simpleTokenizer/index.js"></script>
         <script>
 (() => {
+
+let code = `
+
+width = 300
+height = 200
+fps = 30
+
+playerX = 10
+playerY = 10
+CTC.easyGame.sendString("INIT," + width + "," + height)
+@LOOP_START
+    beginTime = $currentTime()
+
+    CTC.easyGame.sendString("RECT,0,0," + width +"," + height + ",100,150,255")
+    CTC.easyGame.sendString("RECT," + playerX + "," + playerY + ",10,10,255,0,0")
+
+    playerX = (playerX + 1) % width
+    playerY = (playerY + 2) % height
+
+    endTime = $currentTime()
+    diff = endTime - beginTime
+    delay = 1.0 / fps - diff
+    if delay >= 0 goto @PAUSE
+        delay = 0.001
+    @PAUSE
+    $pause(delay)
+goto @LOOP_START
+
+
+`.trim();
+
+    window.addEventListener('load', () => {
+        EasyGame.initSurface(document.getElementById('screen'));
+        document.getElementById('code').value = code;
+    });
 
     window.run = async () => {
         let code = document.getElementById('code').value;
@@ -35,10 +71,14 @@
         <div>Lol, it's an IDE</div>
 
         <div>
-            <textarea id="code" style="width:100%; height: 400px;"></textarea>
+            <textarea id="code" spellcheck="false" style="width:100%; height: 400px;"></textarea>
         </div>
 
         <button onclick="run()">Run!</button>
+
+        <div>
+            <canvas id="screen" width="640" height="480"/>
+        </div>
 
         <div id="output"></div>
     </body>
