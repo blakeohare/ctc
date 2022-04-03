@@ -4,6 +4,10 @@
         <title>CTC Runner</title>
         <meta charset="utf-8">
         <script src="ctc.js"></script>
+        <script src="services/acrylic/index.js"></script>
+        <script src="services/acrylic-parse/index.js"></script>
+        <script src="services/cbx-encode/index.js"></script>
+        <script src="services/cbx-runtime/index.js"></script>
         <script src="services/easyGame/index.js"></script>
         <script src="services/sillyLang/index.js"></script>
         <script src="services/sillyLangParser/index.js"></script>
@@ -12,7 +16,18 @@
         <script>
 (() => {
 
-let code = `
+let acrCode = `
+
+void main(string[] args) {
+    print("Hello, World!");
+    for (int i = 1; i <= 10; i++) {
+        print(i + " Mississippi");
+    }
+}
+
+`.trim();
+
+let slangCode = `
 
 width = 300
 height = 200
@@ -44,19 +59,20 @@ goto @LOOP_START
 
     window.addEventListener('load', () => {
         EasyGame.initSurface(document.getElementById('screen'));
-        document.getElementById('code').value = code;
+        document.getElementById('code').value = slangCode;
+        document.getElementById('code').value = acrCode;
     });
 
     window.run = async () => {
         let code = document.getElementById('code').value;
         
-        let SillyLang = new CTC.Service('sillylang');
+        let Acrylic = new CTC.Service('acrylic');
 
         (async () => {
 
-            let result = await SillyLang.sendJsonRequestAsync({
+            let result = await Acrylic.sendJsonRequestAsync({
                 files: [
-                    { filename: "main.slang", content: code }
+                    { filename: "main.acr", content: code }
                 ],
             })
 
